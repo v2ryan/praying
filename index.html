@@ -522,7 +522,7 @@
                     <div class="no-image">
                         <p>📷 尚無圖片</p>
                         <p style="font-size: 0.9rem; margin-top: 10px;">
-                            請上傳 WhatsApp Image 2026-01-31.jpg
+                            請上傳 2026-01-31.jpg
                         </p>
                     </div>
                 </div>
@@ -538,7 +538,7 @@
                     </div>
                     <div id="audioPlayer">
                         <div class="no-audio">
-                            🎤 請上傳 WhatsApp Audio 2026-01-31.mp3
+                            🎤 請上傳 2026-01-31.mp3
                         </div>
                     </div>
                 </div>
@@ -551,11 +551,7 @@
         // State
         let currentDate = new Date(2026, 0, 31); // Start with Jan 31, 2026
         let selectedDate = new Date(2026, 0, 31);
-        let mediaFiles = []; // Will store available media files
-
-        // File patterns
-        const IMAGE_PATTERN = /WhatsApp Image (\d{4})-(\d{2})-(\d{2})\.jpg/i;
-        const AUDIO_PATTERN = /WhatsApp Audio (\d{4})-(\d{2})-(\d{2})\.mp3/i;
+        let mediaFiles = [];
 
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
@@ -566,7 +562,6 @@
             // iOS audio fix - ensure audio elements work on iOS
             if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
                 document.addEventListener('click', function initAudio(event) {
-                    // Check if click was on audio element
                     if (event.target.tagName === 'AUDIO' || event.target.closest('audio')) {
                         const audioElement = event.target.tagName === 'AUDIO' ? event.target : event.target.closest('audio');
                         if (audioElement && !audioElement.hasAttribute('data-initialized')) {
@@ -578,21 +573,14 @@
             }
         });
 
-        // Scan for media files (simulated - in real use, you'd list files from server)
+        // Scan for media files
         async function scanMediaFiles() {
-            // In a real scenario, you'd fetch a list of files from the server
-            // For now, we'll simulate checking if files exist
             mediaFiles = [];
-            
-            // Simulate scanning media/ directory
             const dates = generateDates();
             for (const date of dates) {
                 const dateStr = formatDateForFile(date);
-                
-                // Simulate checking if files exist
-                // In real implementation, you'd check actual file existence
-                const hasImage = false; // Will be determined by actual file check
-                const hasAudio = false; // Will be determined by actual file check
+                const hasImage = false;
+                const hasAudio = false;
                 
                 mediaFiles.push({
                     date: date,
@@ -617,7 +605,7 @@
             return dates;
         }
 
-        // Format date for filename
+        // Format date for filename (e.g., 2026-01-31)
         function formatDateForFile(date) {
             const year = date.getFullYear();
             const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -652,82 +640,42 @@
                 getLunarDate(selectedDate);
             document.getElementById('audioDate').textContent = dateStr;
             
-            // Update image
+            // Update image - Simple filename: 2026-01-31.jpg
             const imageContainer = document.getElementById('imageContainer');
-
-            // Try multiple possible image paths
-            const possibleImagePaths = [
-                `media/WhatsApp Image ${dateStr}.jpg`,
-                `media/WhatsApp Image ${dateStr}.jpeg`,
-                `media/WhatsApp%20Image%20${dateStr}.jpg`,
-                `media/WhatsApp%20Image%20${dateStr}.jpeg`,
-                `media/WhatsApp_Image_${dateStr}.jpg`,
-                `media/WhatsApp_Image_${dateStr}.jpeg`
-            ];
-
-            let imageLoaded = false;
-            for (const imagePath of possibleImagePaths) {
-                const img = new Image();
-                img.onload = () => {
-                    if (!imageLoaded) {
-                        imageLoaded = true;
-                        imageContainer.innerHTML = `<img src="${imagePath}" alt="靈修圖片 ${dateStr}">`;
-                    }
-                };
-                img.onerror = () => {
-                    if (!imageLoaded) {
-                        // Try next path
-                        imageLoaded = false;
-                    }
-                };
-                img.src = imagePath;
-            }
-
-            // If no image loads after trying all paths, show no image
-            setTimeout(() => {
-                if (!imageLoaded) {
-                    showNoImage();
-                }
-            }, 1000);
+            const imagePath = `media/${dateStr}.jpg`;
             
-            // Update audio - Simplified for iOS compatibility
+            const img = new Image();
+            img.onload = () => {
+                imageContainer.innerHTML = `<img src="${imagePath}" alt="靈修圖片 ${dateStr}">`;
+            };
+            img.onerror = () => {
+                showNoImage();
+            };
+            img.src = imagePath;
+            
+            // Update audio - Simple filename: 2026-01-31.mp3
             const audioPlayer = document.getElementById('audioPlayer');
-
-            // Always show audio player - let browser handle missing files
-            const audioPath = `media/WhatsApp Audio ${dateStr}.mp3`;
-            const encodedAudioPath = encodeURIComponent(audioPath);
+            const audioPath = `media/${dateStr}.mp3`;
 
             audioPlayer.innerHTML = `
                 <div class="audio-wrapper">
                     <audio controls preload="metadata" playsinline style="width: 100%; outline: none;" id="audioElement-${dateStr}">
                         <source src="${audioPath}" type="audio/mpeg">
-                        <source src="${encodedAudioPath}" type="audio/mpeg">
-                        您的瀏覽器不支援音頻播放。<br>
-                        Your browser does not support audio playback.
+                        您的瀏覽器不支援音頻播放。
                     </audio>
-                    <div class="audio-error" id="audioError-${dateStr}" style="display: none; color: #d9534f; margin-top: 10px; font-size: 0.9rem;">
-                        ❌ 音頻檔案不存在或無法播放
-                        <br>
-                        Audio file not found or cannot be played
-                    </div>
                 </div>
             `;
 
             // Add error handler after audio element is in DOM
             setTimeout(() => {
                 const audioElement = document.getElementById(`audioElement-${dateStr}`);
-                const errorElement = document.getElementById(`audioError-${dateStr}`);
-
                 if (audioElement) {
                     audioElement.addEventListener('error', () => {
-                        if (errorElement) {
-                            errorElement.style.display = 'block';
-                        }
+                        showNoAudio();
                     });
-
                     // iOS: load audio on user interaction
                     audioElement.addEventListener('play', () => {
-                        if (audioElement.readyState < 2) { // STILL_LOADING or NO_SOURCE
+                        if (audioElement.readyState < 2) {
                             audioElement.load();
                         }
                     });
@@ -740,7 +688,7 @@
                 <div class="no-image">
                     <p>📷 尚無圖片</p>
                     <p style="font-size: 0.9rem; margin-top: 10px;">
-                        請上傳 WhatsApp Image ${formatDateForFile(selectedDate)}.jpg
+                        請上傳 ${formatDateForFile(selectedDate)}.jpg
                     </p>
                 </div>
             `;
@@ -749,22 +697,19 @@
         function showNoAudio() {
             document.getElementById('audioPlayer').innerHTML = `
                 <div class="no-audio">
-                    🎤 請上傳 WhatsApp Audio ${formatDateForFile(selectedDate)}.mp3
+                    🎤 請上傳 ${formatDateForFile(selectedDate)}.mp3
                 </div>
             `;
         }
 
         // Get lunar date (simplified approximation)
         function getLunarDate(date) {
-            // This is a simplified placeholder
-            // For accurate lunar dates, you'd need a proper lunar calendar library
             const lunarMonths = ['正月', '二月', '三月', '四月', '五月', '六月', 
                                 '七月', '八月', '九月', '十月', '冬月', '臘月'];
             const lunarDays = ['初一', '初二', '初三', '初四', '初五', '初六', '初七', '初八', '初九', '初十',
                               '十一', '十二', '十三', '十四', '十五', '十六', '十七', '十八', '十九', '二十',
                               '廿一', '廿二', '廿三', '廿四', '廿五', '廿六', '廿七', '廿八', '廿九', '三十'];
             
-            // Approximate calculation (for demonstration)
             const month = date.getMonth();
             const day = date.getDate() - 1;
             return `農曆${lunarMonths[month]}${lunarDays[day] || '初一'}`;
@@ -814,8 +759,7 @@
                     div.classList.add('active');
                 }
                 
-                // Check if has content (would be determined by actual file existence)
-                // For now, we'll simulate marking today
+                // Check if today
                 if (date.toDateString() === today.toDateString()) {
                     div.classList.add('has-content');
                 }
