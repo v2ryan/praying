@@ -654,44 +654,85 @@
             
             // Update image
             const imageContainer = document.getElementById('imageContainer');
-            const imagePath = `media/WhatsApp Image ${dateStr}.jpg`;
+
+            // Try multiple possible image paths
+            const possibleImagePaths = [
+                `media/WhatsApp Image ${dateStr}.jpg`,
+                `media/WhatsApp Image ${dateStr}.jpeg`,
+                `media/WhatsApp%20Image%20${dateStr}.jpg`,
+                `media/WhatsApp%20Image%20${dateStr}.jpeg`,
+                `media/WhatsApp_Image_${dateStr}.jpg`,
+                `media/WhatsApp_Image_${dateStr}.jpeg`
+            ];
+
+            let imageLoaded = false;
+            for (const imagePath of possibleImagePaths) {
+                const img = new Image();
+                img.onload = () => {
+                    if (!imageLoaded) {
+                        imageLoaded = true;
+                        imageContainer.innerHTML = `<img src="${imagePath}" alt="靈修圖片 ${dateStr}">`;
+                    }
+                };
+                img.onerror = () => {
+                    if (!imageLoaded) {
+                        // Try next path
+                        imageLoaded = false;
+                    }
+                };
+                img.src = imagePath;
+            }
+
+            // If no image loads after trying all paths, show no image
+            setTimeout(() => {
+                if (!imageLoaded) {
+                    showNoImage();
+                }
+            }, 1000);
             
-            // Try to load image
-            const img = new Image();
-            img.onload = () => {
-                imageContainer.innerHTML = `<img src="${imagePath}" alt="靈修圖片 ${dateStr}" onerror="showNoImage()">`;
-            };
-            img.onerror = () => {
-                showNoImage();
-            };
-            img.src = imagePath;
-            
-            // Update audio
+            // Update audio - Simplified for iOS compatibility
             const audioPlayer = document.getElementById('audioPlayer');
+
+            // Always show audio player - let browser handle missing files
             const audioPath = `media/WhatsApp Audio ${dateStr}.mp3`;
-            const encodedAudioPath = `media/WhatsApp%20Audio%20${dateStr}.mp3`;
-            
-            // Try to load audio directly (works with local files)
-            const audio = new Audio();
-            audio.preload = 'metadata';
-            audio.crossOrigin = 'anonymous';
-            
-            audio.onloadedmetadata = () => {
-                // Audio loaded successfully - iOS compatible audio element
-                audioPlayer.innerHTML = `
-                    <audio controls preload="metadata" playsinline style="width: 100%; outline: none;">
+            const encodedAudioPath = encodeURIComponent(audioPath);
+
+            audioPlayer.innerHTML = `
+                <div class="audio-wrapper">
+                    <audio controls preload="metadata" playsinline style="width: 100%; outline: none;" id="audioElement-${dateStr}">
+                        <source src="${audioPath}" type="audio/mpeg">
                         <source src="${encodedAudioPath}" type="audio/mpeg">
-                        您的瀏覽器不支援音頻播放。
+                        您的瀏覽器不支援音頻播放。<br>
+                        Your browser does not support audio playback.
                     </audio>
-                `;
-            };
-            
-            audio.onerror = () => {
-                showNoAudio();
-            };
-            
-            // Start loading to check if file exists
-            audio.src = audioPath;
+                    <div class="audio-error" id="audioError-${dateStr}" style="display: none; color: #d9534f; margin-top: 10px; font-size: 0.9rem;">
+                        ❌ 音頻檔案不存在或無法播放
+                        <br>
+                        Audio file not found or cannot be played
+                    </div>
+                </div>
+            `;
+
+            // Add error handler after audio element is in DOM
+            setTimeout(() => {
+                const audioElement = document.getElementById(`audioElement-${dateStr}`);
+                const errorElement = document.getElementById(`audioError-${dateStr}`);
+
+                if (audioElement) {
+                    audioElement.addEventListener('error', () => {
+                        if (errorElement) {
+                            errorElement.style.display = 'block';
+                        }
+                    });
+
+                    // iOS: load audio on user interaction
+                    audioElement.addEventListener('play', () => {
+                        if (audioElement.readyState < 2) { // STILL_LOADING or NO_SOURCE
+                            audioElement.load();
+                        }
+                    });
+                }
+            }, 100);
         }
 
         function showNoImage() {
