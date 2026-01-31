@@ -262,6 +262,24 @@
             font-style: italic;
         }
 
+        /* iOS-specific audio fixes */
+        audio {
+            -webkit-appearance: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        audio::-webkit-media-controls-panel {
+            background-color: #f5f0e8;
+        }
+        
+        /* Fix audio player on iOS */
+        @supports (-webkit-touch-callout: none) {
+            audio {
+                height: 44px;
+                min-height: 44px;
+            }
+        }
+
         /* Upload Instructions */
         .upload-info {
             margin-top: 30px;
@@ -544,6 +562,20 @@
             scanMediaFiles();
             renderCalendar();
             updateContent();
+            
+            // iOS audio fix - ensure audio elements work on iOS
+            if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+                document.addEventListener('click', function initAudio(event) {
+                    // Check if click was on audio element
+                    if (event.target.tagName === 'AUDIO' || event.target.closest('audio')) {
+                        const audioElement = event.target.tagName === 'AUDIO' ? event.target : event.target.closest('audio');
+                        if (audioElement && !audioElement.hasAttribute('data-initialized')) {
+                            audioElement.setAttribute('data-initialized', 'true');
+                            audioElement.load();
+                        }
+                    }
+                }, true);
+            }
         });
 
         // Scan for media files (simulated - in real use, you'd list files from server)
@@ -637,16 +669,18 @@
             // Update audio
             const audioPlayer = document.getElementById('audioPlayer');
             const audioPath = `media/WhatsApp Audio ${dateStr}.mp3`;
+            const encodedAudioPath = `media/WhatsApp%20Audio%20${dateStr}.mp3`;
             
             // Try to load audio directly (works with local files)
             const audio = new Audio();
             audio.preload = 'metadata';
+            audio.crossOrigin = 'anonymous';
             
             audio.onloadedmetadata = () => {
-                // Audio loaded successfully
+                // Audio loaded successfully - iOS compatible audio element
                 audioPlayer.innerHTML = `
-                    <audio controls style="width: 100%;">
-                        <source src="${audioPath}" type="audio/mpeg">
+                    <audio controls preload="metadata" playsinline style="width: 100%; outline: none;">
+                        <source src="${encodedAudioPath}" type="audio/mpeg">
                         您的瀏覽器不支援音頻播放。
                     </audio>
                 `;
