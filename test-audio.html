@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Test | 音頻測試</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h2 {
+            color: #333;
+            border-bottom: 2px solid #8b7355;
+            padding-bottom: 10px;
+        }
+        audio {
+            width: 100%;
+            margin: 15px 0;
+            -webkit-appearance: none;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        code {
+            background: #e9ecef;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔊 音頻播放測試 Audio Playback Test</h1>
+    <p>此頁面用於測試 iOS 上的音頻播放功能。This page tests audio playback on iOS.</p>
+
+    <!-- Test 1: Direct MP3 with spaces -->
+    <div class="test-container">
+        <h2>測試 1: 檔名有空格 Filename with spaces</h2>
+        <p>檔案：media/WhatsApp Audio 2026-01-31.mp3</p>
+        <audio controls preload="metadata" id="audio1">
+            <source src="media/WhatsApp Audio 2026-01-31.mp3" type="audio/mpeg">
+            您的瀏覽器不支援音頻播放。
+        </audio>
+        <div id="status1" class="info">⏳ 等待測試 Waiting for test...</div>
+    </div>
+
+    <!-- Test 2: URL encoded -->
+    <div class="test-container">
+        <h2>測試 2: URL 編碼 URL Encoded</h2>
+        <p>檔案：media/WhatsApp%20Audio%202026-01-31.mp3</p>
+        <audio controls preload="metadata" id="audio2">
+            <source src="media/WhatsApp%20Audio%202026-01-31.mp3" type="audio/mpeg">
+            您的瀏覽器不支援音頻播放。
+        </audio>
+        <div id="status2" class="info">⏳ 等待測試 Waiting for test...</div>
+    </div>
+
+    <!-- Test 3: Without spaces -->
+    <div class="test-container">
+        <h2>測試 3: 檔名無空格 Filename without spaces</h2>
+        <p>檔案：media/WhatsApp_Audio_2026-01-31.mp3（如果存在）</p>
+        <audio controls preload="metadata" id="audio3">
+            <source src="media/WhatsApp_Audio_2026-01-31.mp3" type="audio/mpeg">
+            您的瀏覽器不支援音頻播放。
+        </audio>
+        <div id="status3" class="info">⏳ 等待測試 Waiting for test...</div>
+    </div>
+
+    <!-- Device Info -->
+    <div class="test-container">
+        <h2>📱 裝置資訊 Device Info</h2>
+        <p><strong>用戶代理 User Agent:</strong></p>
+        <code id="userAgent">Loading...</code>
+        <p><strong>瀏覽器 Browser:</strong> <span id="browser">Loading...</span></p>
+        <p><strong>平台 Platform:</strong> <span id="platform">Loading...</span></p>
+    </div>
+
+    <script>
+        // Display device info
+        document.getElementById('userAgent').textContent = navigator.userAgent;
+        document.getElementById('browser').textContent = navigator.appName;
+        document.getElementById('platform').textContent = navigator.platform;
+
+        // Test each audio element
+        const tests = [
+            { id: 'audio1', statusId: 'status1', name: 'Direct MP3' },
+            { id: 'audio2', statusId: 'status2', name: 'URL Encoded' },
+            { id: 'audio3', statusId: 'status3', name: 'No Spaces' }
+        ];
+
+        tests.forEach(test => {
+            const audio = document.getElementById(test.id);
+            const status = document.getElementById(test.statusId);
+
+            // Check if audio loaded
+            audio.addEventListener('loadedmetadata', () => {
+                status.className = 'success';
+                status.textContent = '✅ ' + test.name + ' - 音頻載入成功 Audio loaded successfully!';
+            });
+
+            audio.addEventListener('error', () => {
+                status.className = 'error';
+                status.textContent = '❌ ' + test.name + ' - 音頻載入失敗 Audio failed to load';
+            });
+
+            audio.addEventListener('play', () => {
+                status.textContent = '▶️ ' + test.name + ' - 音頻播放中 Audio is playing...';
+            });
+
+            audio.addEventListener('pause', () => {
+                status.textContent = '⏸️ ' + test.name + ' - 音頻已暫停 Audio paused';
+            });
+        });
+    </script>
+</body>
+</html>
